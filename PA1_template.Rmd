@@ -4,9 +4,13 @@ output:
   html_document:
     keep_md: true
 ---
+# Introduction
 
+This is peer graded assignment 1 of Reproducible research. In this assignment, students were asked to perform basic R programming and obtain results whilst presenting them in a orderly fashion through usage of R markdown.
 
-## Loading and preprocessing the data
+## Data provided
+
+The activity 
 
 
 

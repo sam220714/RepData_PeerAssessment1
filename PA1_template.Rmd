@@ -4,26 +4,150 @@ output:
   html_document:
     keep_md: true
 ---
+
 # Introduction
 
 This is peer graded assignment 1 of Reproducible research. In this assignment, students were asked to perform basic R programming and obtain results whilst presenting them in a orderly fashion through usage of R markdown.
 
-## Data provided
+## Data
 
-The activity 
+The activity data provided in the assignment has been gathered from a personal activity monitoring device. 
+
+# Assignment
+
+### Loading and pre-processing data
+
+It is assumed that the csv file is in the operating directory of the user
+
+```{r}
+activity <- read.csv("activity.csv")
+```
+
+### Mean total number of steps taken per day
+
+```{r}
+steps <- aggregate(activity$steps, list(activity$date), FUN = sum)
+
+colnames(steps) <- c("Date","Total")
+
+head(steps)
+```
+ 
+Creating histogram will help in further understanding:
+
+```{r}
+library(ggplot2)
+
+ggplot(data = steps, aes(Total)) + geom_histogram(col = "violet", fill = "lightblue", binwidth = 2500, boundary = 0) + scale_x_continuous(breaks = seq(0,25000,2500)) + scale_y_continuous(breaks = seq(0,18,2))
+```
+
+
+To report the mean and median of the total number steps taken per day, mean() and median() function are put to use:
+
+```{r}
+mean(steps$Total, na.rm = TRUE)
+
+median(steps$Total, na.rm = TRUE)
+```
+### Average daily activity pattern
+
+First a dataset is created of 5-minute intervals and the average number of steps taken, averaged across all days
+
+```{r}
+time_int <- aggregate(activity$steps, by = list(activity$interval), mean, na.rm = TRUE)
+
+colnames(time_int) <- c("interval", "average")
+```
+
+Then a time series plot is drawn via ggplot2:
+```{r}
+ggplot(data = time_int, aes(interval, average)) + geom_line(col = "blue", size = 1) +ggtitle("Average daily activity pattern") + xlab("Time Intervals") + ylab("Average number of steps taken")
+```
+
+For the 5-minute interval containing the maximum number of steps, which.max() function is used
+
+```{r}
+int_max_steps <- time_int[which.max(time_int$average),]$interval
+
+int_max_steps
+```
+
+### Imputing missing values
+
+Most of the raw data available contains missing values, in the assignment, the number of NA values are determined as
+
+```{r}
+sum(is.na(activity$steps))
+```
+
+I have replaced all the missing values with the mean for that 5-minute interval, for that another dataset was created 
+
+```{r}
+imp_steps <- time_int$average[match(activity$interval, time_int$interval)]
+```
+
+A copy of the original file is made
+
+```{r}
+s <- read.csv("activity.csv")
+```
+
+Now to replace the NA values I have used a for loop
+
+```{r}
+for (i in 1:length(s$date))
+{
+  if(is.na(s$steps[i]))
+  {
+    s$steps[i] <- imp_steps[i]
+  }
+}
+```
+another dataset similar to 'steps' is created
+
+```{r}
+s_steps <- aggregate(s$steps, list(s$date), FUN = sum)
+
+colnames(s_steps) <- c("Date","Total")
+```
+
+Now for the histogram
+
+```{r}
+ggplot(data = s_steps, aes(Total)) + geom_histogram(col = "violet", fill = "lightblue", binwidth = 2500, boundary = 0) + scale_x_continuous(breaks = seq(0,25000,2500)) + scale_y_continuous(breaks = seq(0,30,2))
+```
+
+To report the mean and median of the total number steps taken per day, mean() and median() functions are put to use:
+
+```{r}
+mean(s_steps$Total)
+
+median(s_steps$Total)
+```
+
+### Differences in activity patterns between weekdays and weekends
+
+To accommodate a new factor variable, two additional columns were added for weekday, type of weekday, whether it is a weekend or not sorts.
+
+```{r}
+s$weekday <- weekdays(as.POSIXlt(s$date))
+
+s$day_type <- ifelse(test = s$weekday == c("Saturday","Sunday"), yes = "Weekend", no = "Weekday")
+```
+
+After this, another dataset is made comprising of 5-minute intervals and the average number of steps taken, averaged across all weekday days or weekend days
+
+```{r}
+time_int2 <- aggregate(s$steps, by = list(s$interval, s$day_type), mean)
+
+names(time_int2) <- c("interval","Day_type","Average")
+```
+
+For the panel plot, I have used qplot() function
+
+```{r}
+qplot(data = time_int2, x = interval, y = Average, facets = Day_type~., geom="line") + ggtitle("Activity pattern in Weekdays and Weekends") + xlab("Time Intervals") + ylab("Average number of steps taken")
+```
 
 
 
-## What is mean total number of steps taken per day?
-
-
-
-## What is the average daily activity pattern?
-
-
-
-## Imputing missing values
-
-
-
-## Are there differences in activity patterns between weekdays and weekends?
